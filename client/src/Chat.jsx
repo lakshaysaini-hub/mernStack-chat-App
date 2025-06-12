@@ -3,6 +3,7 @@ import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
 import uniqBy from "lodash/uniqBy";
+import axios from "axios";
 
 export default function Chat() {
   const { username, id } = useContext(UserContext);
@@ -61,11 +62,12 @@ export default function Chat() {
   // filtering dupllicates messages (2 time rendering fault using lodash)
   // using unique database id
 
-  const messageWithoutDupes = uniqBy(messages, "id");
+  const messageWithoutDupes = uniqBy(messages, "_id");
 
   // Sending message from inbox to web socket server
   function sendMessage(ev) {
     ev.preventDefault();
+    if (!newMessageText.trim()) return;
     ws.send(
       JSON.stringify({
         recipient: selectedUserId,
@@ -79,7 +81,7 @@ export default function Chat() {
         text: newMessageText,
         sender: id,
         recipient: selectedUserId,
-        id: Date.now(),
+        _id: Date.now().toString(),
       },
     ]);
   }
@@ -88,9 +90,19 @@ export default function Chat() {
   useEffect(() => {
     const div = divUnderMessages.current;
     if (div) {
-      div.scrollIntoView({ behaviour: "smooth", block: "end" });
+      div.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
+
+  // acessing old messages sent/recieved previously on selecting user from database
+
+  useEffect(() => {
+    if (selectedUserId) {
+      axios.get("/messages/" + selectedUserId).then((res) => {
+        setMessages(res.data);
+      });
+    }
+  }, [selectedUserId]);
 
   const onlinePeopleExcOurUser = { ...onlinePeople };
 
@@ -135,6 +147,7 @@ export default function Chat() {
               <div className=" overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                 {messageWithoutDupes.map((message) => (
                   <div
+                    key={message._id}
                     className={` pr-3 ${
                       message.sender === id ? "text-right" : "text-left"
                     } `}
@@ -148,8 +161,6 @@ export default function Chat() {
                     : "bg-white text-gray-500"
                 }`}
                     >
-                      sender:{message.sender} <br />
-                      my id: {id} <br />
                       {message.text}
                     </div>
                   </div>
