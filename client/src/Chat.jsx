@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
@@ -16,6 +16,9 @@ export default function Chat() {
   const [newMessageText, setnewMessageText] = useState("");
 
   const [messages, setMessages] = useState([]);
+
+  //Add reference for the bottom object
+  const divUnderMessages = useRef();
 
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:4000");
@@ -69,15 +72,22 @@ export default function Chat() {
     ]);
   }
 
+  // using to detect when msg got changed to make scroll bar go to bottom
+  useEffect(() => {
+    const div = divUnderMessages.current;
+    if (div) {
+      div.scrollIntoView({ behaviour: "smooth", block: "end" });
+    }
+  }, [messages]);
+
   const onlinePeopleExcOurUser = { ...onlinePeople };
 
   delete onlinePeopleExcOurUser[id];
 
   return (
     <div className="flex h-screen">
-      <div className="bg-white w-1/4 ">
+      <div className="bg-white w-1/4">
         <Logo />
-
         {Object.keys(onlinePeopleExcOurUser).map((userId) => (
           <div
             key={userId}
@@ -95,7 +105,7 @@ export default function Chat() {
           </div>
         ))}
       </div>
-      <div className=" flex flex-col bg-blue-50 w-3/4 p-2">
+      <div className=" flex flex-col bg-blue-50 w-3/4  pl-2 pt-2 pb-2">
         <div className="flex-grow">
           {!selectedUserId && (
             <div
@@ -107,35 +117,39 @@ export default function Chat() {
               </div>
             </div>
           )}
-        </div>
-        {!!selectedUserId && (
-          // displaying messages either sent or typed by user
-          <div className="overflow-scroll">
-            {messageWithoutDupes.map((message) => (
-              <div
-                className={` ${
-                  message.sender === id ? "text-right" : "text-left"
-                }`}
-              >
-                <div
-                  className={`
+          {!!selectedUserId && (
+            // displaying messages either sent or typed by user
+            <div className="relative h-full">
+              <div className=" overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
+                {messageWithoutDupes.map((message) => (
+                  <div
+                    className={` pr-3 ${
+                      message.sender === id ? "text-right" : "text-left"
+                    } `}
+                  >
+                    <div
+                      className={`
                  text-left inline-block p-2 my-1 rounded-md text-sm
                 ${
                   message.sender === id
                     ? "bg-blue-500 text-white"
-                    : "bg-white text -gray-500"
+                    : "bg-white text-gray-500"
                 }`}
-                >
-                  {message.text}
-                </div>
+                    >
+                      sender:{message.sender} <br />
+                      my id: {id} <br />
+                      {message.text}
+                    </div>
+                  </div>
+                ))}
+                <div ref={divUnderMessages}></div>
               </div>
-            ))}
-          </div>
-        )}
-
+            </div>
+          )}
+        </div>
         {!!selectedUserId && (
           // Showing footer buttons ans sending inbox only on selection of a user
-          <form className="flex gap-2" onSubmit={sendMessage}>
+          <form className="flex gap-1 mr-1" onSubmit={sendMessage}>
             <input
               type="text"
               value={newMessageText}
