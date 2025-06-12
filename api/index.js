@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { User } from "./models/User.js";
+import { MessageModel } from "./models/Message.js";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -118,15 +119,29 @@ wss.on("connection", (connection, req) => {
       }
     }
   }
-
-  connection.on("message", (message) => {
+  // sending message to appropriate recipient and saving into data base
+  connection.on("message", async (message) => {
     const messageData = JSON.parse(message.toString());
     const { recipient, text } = messageData;
 
     if (recipient && text) {
+      const messageDoc = await MessageModel.create({
+        sender: connection.userId,
+        recipient,
+        text,
+      });
+
       [...wss.clients]
         .filter((c) => c.userId === recipient)
-        .forEach((c) => c.send(JSON.stringify({ text })));
+        .forEach((c) =>
+          c.send(
+            JSON.stringify({
+              text,
+              sender: connection.userId,
+              id: messageDoc._id,
+            })
+          )
+        );
     }
   });
 
