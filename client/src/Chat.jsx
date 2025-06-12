@@ -20,11 +20,23 @@ export default function Chat() {
   //Add reference for the bottom object
   const divUnderMessages = useRef();
 
+  // function to connect ot websocket and also try to reconnect if closed somehow
+
   useEffect(() => {
+    connectToWs();
+  }, []);
+
+  function connectToWs() {
     const ws = new WebSocket("ws://localhost:4000");
     setWs(ws);
     ws.addEventListener("message", handleMessage);
-  }, []);
+    ws.addEventListener("close", () => {
+      setTimeout(() => {
+        console.log("Disconnected .Trying to reconnect.");
+        connectToWs();
+      }, 1000);
+    });
+  }
 
   function showOnlinePeople(peopleArray) {
     const people = {};
