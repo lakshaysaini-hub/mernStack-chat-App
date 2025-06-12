@@ -2,6 +2,8 @@ import { useContext, useEffect, useState } from "react";
 import Avatar from "./Avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
+import uniqBy from "lodash/uniqBy";
+
 export default function Chat() {
   const { username, id } = useContext(UserContext);
 
@@ -29,19 +31,24 @@ export default function Chat() {
     setOnlinePeople(people);
   }
 
+  // handling the message recieved from wss
+  //showing online people and showing incoming messages
   function handleMessage(ev) {
     const messageData = JSON.parse(ev.data);
 
     if ("online" in messageData) {
       showOnlinePeople(messageData.online);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        { text: messageData.text, isOur: false },
-      ]);
+    } else if ("text" in messageData) {
+      setMessages((prev) => [...prev, { ...messageData }]);
     }
   }
 
+  // filtering dupllicates messages (2 time rendering fault using lodash)
+  // using unique database id
+
+  const messageWithoutDupes = uniqBy(messages, "id");
+
+  // Sending message from inbox to web socket server
   function sendMessage(ev) {
     ev.preventDefault();
     ws.send(
@@ -51,7 +58,15 @@ export default function Chat() {
       })
     );
     setnewMessageText("");
-    setMessages((prev) => [...prev, { text: newMessageText, isOur: true }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: newMessageText,
+        sender: id,
+        recipient: selectedUserId,
+        id: Date.now(),
+      },
+    ]);
   }
 
   const onlinePeopleExcOurUser = { ...onlinePeople };
@@ -93,18 +108,33 @@ export default function Chat() {
             </div>
           )}
         </div>
-
         {!!selectedUserId && (
-          //showimg messages
-          <div>
-            {messages.map((message) => (
-              <div>{message.text}</div>
+          // displaying messages either sent or typed by user
+          <div className="overflow-scroll">
+            {messageWithoutDupes.map((message) => (
+              <div
+                className={` ${
+                  message.sender === id ? "text-right" : "text-left"
+                }`}
+              >
+                <div
+                  className={`
+                 text-left inline-block p-2 my-1 rounded-md text-sm
+                ${
+                  message.sender === id
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text -gray-500"
+                }`}
+                >
+                  {message.text}
+                </div>
+              </div>
             ))}
           </div>
         )}
 
         {!!selectedUserId && (
-          // Showing footer buttons
+          // Showing footer buttons ans sending inbox only on selection of a user
           <form className="flex gap-2" onSubmit={sendMessage}>
             <input
               type="text"

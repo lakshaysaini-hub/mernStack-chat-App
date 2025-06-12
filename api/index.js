@@ -119,7 +119,7 @@ wss.on("connection", (connection, req) => {
       }
     }
   }
-  // sending message to appropriate recipient and saving into data base
+  // sending message to appropriate recipient and saving into database
   connection.on("message", async (message) => {
     const messageData = JSON.parse(message.toString());
     const { recipient, text } = messageData;
@@ -137,6 +137,7 @@ wss.on("connection", (connection, req) => {
           c.send(
             JSON.stringify({
               text,
+              recipient,
               sender: connection.userId,
               id: messageDoc._id,
             })
