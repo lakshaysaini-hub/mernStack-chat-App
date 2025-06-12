@@ -1,4 +1,4 @@
-export default function Avatar({ userId, username }) {
+export default function Avatar({ userId, username, online }) {
   const colors = [
     "bg-red-100",
     "bg-green-100",
@@ -12,6 +12,7 @@ export default function Avatar({ userId, username }) {
   // const colorIndex = userIBase10 % colors.length;
   // const color = colors[colorIndex];
 
+  // unique color index logic
   const hashString = (str) => {
     let hash = 5381;
     for (let i = 0; i < str.length; i++) {
@@ -23,8 +24,11 @@ export default function Avatar({ userId, username }) {
   const color = colors[hashString(userId) % colors.length];
 
   return (
-    <div className={`w-8 h-8 ${color} rounded-full flex items-center`}>
+    <div className={`w-9 h-9 relative ${color} rounded-full flex items-center`}>
       <div className="text-center w-full opacity-70">{username[0]}</div>
+      {online && (
+        <div className="absolute w-2 h-2 bg-green-400 bottom-0 right-0 rounded-full "></div>
+      )}
     </div>
   );
 }
