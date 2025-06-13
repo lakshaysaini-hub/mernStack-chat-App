@@ -29,6 +29,9 @@ export default function Avatar({ userId, username, online }) {
       {online && (
         <div className="absolute w-2 h-2 bg-green-400 bottom-0 right-0 rounded-full "></div>
       )}
+      {!online && (
+        <div className="absolute w-2 h-2 bg-gray-400 bottom-0 right-0 rounded-full "></div>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Logo from "./Logo";
 import { UserContext } from "./UserContext";
 import uniqBy from "lodash/uniqBy";
 import axios from "axios";
+import Contacts from "./Contacts";
 
 export default function Chat() {
   const { username, id } = useContext(UserContext);
@@ -13,6 +14,8 @@ export default function Chat() {
   const [selectedUserId, setselectedUserId] = useState(null);
 
   const [onlinePeople, setOnlinePeople] = useState({});
+
+  const [offinePeople, setOffinePeople] = useState({});
 
   const [newMessageText, setnewMessageText] = useState("");
 
@@ -104,6 +107,23 @@ export default function Chat() {
     }
   }, [selectedUserId]);
 
+  //getting all the user from database when online people changes
+
+  useEffect(() => {
+    axios.get("/people").then((res) => {
+      const offlinePeopleArr = res.data
+        .filter((p) => p._id !== id) //not including me
+        .filter((p) => !Object.keys(onlinePeople).includes(p._id)); //not including other online people
+
+      const offlinePeoples = {};
+      offlinePeopleArr.forEach((p) => {
+        offlinePeoples[p._id] = p.username;
+      });
+      setOffinePeople(offlinePeoples);
+    });
+  }, [onlinePeople]);
+
+  // removing the redundant ourselv from set of online users
   const onlinePeopleExcOurUser = { ...onlinePeople };
   delete onlinePeopleExcOurUser[id];
 
@@ -112,24 +132,26 @@ export default function Chat() {
       <div className="bg-white w-1/4">
         <Logo />
         {Object.keys(onlinePeopleExcOurUser).map((userId) => (
-          <div
+          <Contacts
             key={userId}
+            id={userId}
+            username={onlinePeopleExcOurUser[userId]}
+            selectedUserId={selectedUserId}
             onClick={() => setselectedUserId(userId)}
-            className={`border-b border-gray-100  flex items-center gap-2 cursor-pointer 
-              ${userId === selectedUserId ? "bg-blue-50" : ""}`}
-          >
-            {userId === selectedUserId && (
-              <div className="w-1 bg-blue-500 h-12 rounded-r-md"></div>
-            )}
-            <div className=" flex gap-2 py-2 pl-4 items-center">
-              <Avatar
-                online={true}
-                username={onlinePeople[userId]}
-                userId={userId}
-              />
-              <span className="text-gray-800">{onlinePeople[userId]}</span>
-            </div>
-          </div>
+            selected={userId === selectedUserId}
+            online={true}
+          />
+        ))}
+        {Object.keys(offinePeople).map((userId) => (
+          <Contacts
+            key={userId}
+            id={userId}
+            username={offinePeople[userId]}
+            selectedUserId={selectedUserId}
+            onClick={() => setselectedUserId(userId)}
+            selected={userId === selectedUserId}
+            online={false}
+          />
         ))}
       </div>
       <div className=" flex flex-col bg-blue-50 w-3/4  pl-2 pt-2 pb-2">
