@@ -7,7 +7,7 @@ import axios from "axios";
 import Contacts from "./Contacts";
 
 export default function Chat() {
-  const { username, id } = useContext(UserContext);
+  const { username, id, setId, setUsername } = useContext(UserContext);
 
   const [ws, setWs] = useState(null);
 
@@ -39,6 +39,14 @@ export default function Chat() {
         console.log("Disconnected .Trying to reconnect.");
         connectToWs();
       }, 1000);
+    });
+  }
+
+  //logout function deleting cookie information
+  function logout() {
+    axios.post("/logout").then(() => {
+      setId(null);
+      setUsername(null);
     });
   }
 
@@ -129,30 +137,41 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen">
-      <div className="bg-white w-1/4">
-        <Logo />
-        {Object.keys(onlinePeopleExcOurUser).map((userId) => (
-          <Contacts
-            key={userId}
-            id={userId}
-            username={onlinePeopleExcOurUser[userId]}
-            selectedUserId={selectedUserId}
-            onClick={() => setselectedUserId(userId)}
-            selected={userId === selectedUserId}
-            online={true}
-          />
-        ))}
-        {Object.keys(offinePeople).map((userId) => (
-          <Contacts
-            key={userId}
-            id={userId}
-            username={offinePeople[userId]}
-            selectedUserId={selectedUserId}
-            onClick={() => setselectedUserId(userId)}
-            selected={userId === selectedUserId}
-            online={false}
-          />
-        ))}
+      <div className="bg-white w-1/4 flex flex-col">
+        <div className="flex-grow">
+          <Logo />
+          {Object.keys(onlinePeopleExcOurUser).map((userId) => (
+            <Contacts
+              key={userId}
+              id={userId}
+              username={onlinePeopleExcOurUser[userId]}
+              selectedUserId={selectedUserId}
+              onClick={() => setselectedUserId(userId)}
+              selected={userId === selectedUserId}
+              online={true}
+            />
+          ))}
+          {Object.keys(offinePeople).map((userId) => (
+            <Contacts
+              key={userId}
+              id={userId}
+              username={offinePeople[userId]}
+              selectedUserId={selectedUserId}
+              onClick={() => setselectedUserId(userId)}
+              selected={userId === selectedUserId}
+              online={false}
+            />
+          ))}
+        </div>
+        {/*Adding logout functionalities*/}
+        <div className="p-2 text-center ">
+          <button
+            onClick={logout}
+            className="text-sm bg-blue-100 py-1 px-2 text-gray-500 border rounded-sm cursor-pointer "
+          >
+            LogOut
+          </button>
+        </div>
       </div>
       <div className=" flex flex-col bg-blue-50 w-3/4  pl-2 pt-2 pb-2">
         <div className="flex-grow">
@@ -161,7 +180,7 @@ export default function Chat() {
               className="flex h-full
             flex-grow items-center justify-center"
             >
-              <div className="   text-gray-400 ">
+              <div className="  text-gray-400 ">
                 Select a person to start a conversation.
               </div>
             </div>

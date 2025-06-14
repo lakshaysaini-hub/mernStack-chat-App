@@ -105,6 +105,12 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// logout endpoint
+
+app.post("/logout", (req, res) => {
+  res.cookie("token", "").json("logout");
+});
+
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
